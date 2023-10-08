@@ -1,72 +1,72 @@
-# Cargar las librerías necesarias
+# Load the necessary libraries
 library(shiny)
 library(ggplot2)
 library(dplyr)
 library(plotly)
 
-# Leer el archivo CSV
+# Read the CSV file
 data <- read.csv("city_temperature.csv")
 
-# Crear la aplicación Shiny
+# Create the Shiny application
 ui <- fluidPage(
-  titlePanel("Gráfica de Temperaturas"),
+  titlePanel("Avg. Temperature Chart"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("ciudad", "Selecciona una ciudad:",
+      selectInput("city", "Select a city:",
         choices = unique(data$City),
         selected = "Bogota"
       )
     ),
     mainPanel(
-      plotlyOutput("grafica") # Mostrar la gráfica
+      plotlyOutput("graph") # Display the graph
     )
   )
 )
 
 server <- function(input, output) {
-  # Filtrar los datos según la ciudad seleccionada
-  datos_ciudad <- reactive({
-    if (input$ciudad != "CiudadInicial") {
-      data %>% filter(City == input$ciudad)
+  # Filter the data based on the selected city
+  city_data <- reactive({
+    if (input$city != "InitialCity") {
+      data %>% filter(City == input$city)
     } else {
       NULL
     }
   })
 
-  # Crear la gráfica de línea con línea de tendencia
-  output$grafica <- renderPlotly({
-    if (!is.null(datos_ciudad())) {
-      datos_filtrados <- datos_ciudad() %>%
-        filter(AvgTemperature != -99)  # Filtra los valores de temperatura igual a -99
+  # Create the line graph with a trendline
+  output$graph <- renderPlotly({
+    if (!is.null(city_data())) {
+      filtered_data <- city_data() %>%
+        filter(AvgTemperature != -99)  # Filter out temperature values equal to -99
 
-      # Función para convertir Fahrenheit a Celsius
-      convertir_a_celsius <- function(fahrenheit) {
+      # Function to convert Fahrenheit to Celsius
+      convert_to_celsius <- function(fahrenheit) {
         celsius <- (fahrenheit - 32) * (5/9)
         return(celsius)
       }
 
-      # Aplicar la conversión a la columna AvgTemperature
-      datos_filtrados$AvgTemperature <- convertir_a_celsius(datos_filtrados$AvgTemperature)
+      # Apply the conversion to the AvgTemperature column
+      filtered_data$AvgTemperature <- convert_to_celsius(filtered_data$AvgTemperature)
 
-      # Agrupar los datos por mes y calcular la temperatura promedio
-      datos_agrupados <- datos_filtrados %>%
-        mutate(Fecha = as.Date(paste(Year, Month, "01", sep = "-"))) %>%
-        group_by(Fecha) %>%
-        summarize(TempPromedio = mean(AvgTemperature))
+      # Group the data by month and calculate the average temperature
+      grouped_data <- filtered_data %>%
+        mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"))) %>%
+        group_by(Date) %>%
+        summarize(AvgTemp = mean(AvgTemperature))
 
-      p <- ggplot(datos_agrupados, aes(x = Fecha, y = TempPromedio)) +
+      p <- ggplot(grouped_data, aes(x = Date, y = AvgTemp)) +
         geom_line() +
-        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Agrega la línea de tendencia
-        labs(x = "Fecha", y = "Temperatura Promedio (°C)") +
-        scale_x_date(date_labels = "%Y", date_breaks = "1 year") +  # Personaliza la escala del eje x
+        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add the trendline
+        labs(x = "Date", y = "Average Temperature (°C)") +
+        scale_x_date(date_labels = "%Y", date_breaks = "1 year") +  # Customize the x-axis scale
         theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Orientación vertical de las etiquetas
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Vertical orientation of labels
 
-      ggplotly(p, tooltip = "y")  # Convierte la gráfica de ggplot a plotly
+      ggplotly(p, tooltip = "y")  # Convert the ggplot graph to plotly
     }
   })
 
 }
 
-# Ejecutar la aplicación Shiny
+# Run the Shiny application
 shinyApp(ui, server)
