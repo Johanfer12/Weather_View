@@ -37,7 +37,7 @@ server <- function(input, output) {
   output$graph <- renderPlotly({
     if (!is.null(city_data())) {
       filtered_data <- city_data() %>%
-        filter(AvgTemperature != -99)  # Filter out temperature values equal to -99
+        filter(AvgTemperature != -99)  # Filter out temp. values equal to -99
 
       # Function to convert Fahrenheit to Celsius
       convert_to_celsius <- function(fahrenheit) {
@@ -46,7 +46,9 @@ server <- function(input, output) {
       }
 
       # Apply the conversion to the AvgTemperature column
-      filtered_data$AvgTemperature <- convert_to_celsius(filtered_data$AvgTemperature)
+      filtered_data$AvgTemperature <- convert_to_celsius(
+        filtered_data$AvgTemperature
+      )
 
       # Group the data by month and calculate the average temperature
       grouped_data <- filtered_data %>%
@@ -56,11 +58,11 @@ server <- function(input, output) {
 
       p <- ggplot(grouped_data, aes(x = Date, y = AvgTemp)) +
         geom_line() +
-        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add the trendline
+        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Trendline
         labs(x = "Date", y = "Average Temperature (°C)") +
-        scale_x_date(date_labels = "%Y", date_breaks = "1 year") +  # Customize the x-axis scale
+        scale_x_date(date_labels = "%Y", date_breaks = "1 year") +  # Customize x-axis scale
         theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Vertical orientation of labels
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Label orientation
 
       ggplotly(p, tooltip = "y")  # Convert the ggplot graph to plotly
     }
@@ -70,3 +72,4 @@ server <- function(input, output) {
 
 # Run the Shiny application
 shinyApp(ui, server)
+
