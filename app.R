@@ -9,7 +9,8 @@ data <- read.csv("city_temperature.csv")
 
 # Create the Shiny application
 ui <- fluidPage(
-  titlePanel("Avg. Temperature Chart"),
+  tags$head(includeHTML("google_analytics.html")),
+  titlePanel("Average Temp. Chart"),
   sidebarLayout(
     sidebarPanel(
       selectInput("city", "Select a city:",
